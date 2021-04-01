@@ -16,7 +16,7 @@
         </encoder>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.startsWith("com.azure");</expression>
+                <expression>return logger.startsWith("com.azure") &amp;&amp; !message.startsWith("onDelivery connectionId");</expression>
             </evaluator>
             <OnMismatch>DENY</OnMismatch>
             <OnMatch>ACCEPT</OnMatch>
