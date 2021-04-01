@@ -3,9 +3,12 @@ package org.example;
 import com.azure.messaging.eventhubs.EventHubClientBuilder;
 import com.azure.messaging.eventhubs.EventProcessorClient;
 import com.azure.messaging.eventhubs.EventProcessorClientBuilder;
+import com.azure.messaging.eventhubs.checkpointstore.blob.BlobCheckpointStore;
 import com.azure.messaging.eventhubs.models.ErrorContext;
 import com.azure.messaging.eventhubs.models.EventContext;
 import com.azure.messaging.eventhubs.models.EventPosition;
+import com.azure.storage.blob.BlobContainerAsyncClient;
+import com.azure.storage.blob.BlobContainerClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +21,8 @@ import java.util.stream.IntStream;
 public class Program {
     private static final String EH_CONNECTION_STRING = System.getProperty("EH_CONNECTION_STRING");
     private static final String EVENT_HUB = System.getProperty("EH_NAME");
+    private static final String STORAGE_CONNECTION_STRING = System.getProperty("STORAGE_CONNECTION_STRING");
+    private static final String STORAGE_CONTAINER = System.getProperty("STORAGE_CONTAINER");
 
     /**
      * Main method to demonstrate starting and stopping a {@link EventProcessorClient}.
@@ -36,6 +41,11 @@ public class Program {
 
             eventContext.updateCheckpoint();
         };
+
+        final BlobContainerAsyncClient client = new BlobContainerClientBuilder()
+                .connectionString(STORAGE_CONNECTION_STRING)
+                .containerName(STORAGE_CONTAINER)
+                .buildAsyncClient();
 
         // This error handler logs the error that occurred and keeps the processor running. If the error occurred in
         // a specific partition and had to be closed, the ownership of the partition will be given up and will allow
@@ -58,14 +68,14 @@ public class Program {
                 .initialPartitionEventPosition(positions)
                 .processEvent(processEvent)
                 .processError(processError)
-                .checkpointStore(new SampleCheckpointStore());
+                .checkpointStore(new BlobCheckpointStore(client));
 
         EventProcessorClient eventProcessorClient = eventProcessorClientBuilder.buildEventProcessorClient();
         System.out.println("Starting event processor");
         eventProcessorClient.start();
 
         // Continue to perform other tasks while the processor is running in the background.
-        Thread.sleep(TimeUnit.HOURS.toMillis(20));
+        Thread.sleep(TimeUnit.DAYS.toMillis(3));
 
         System.out.println("Stopping event processor");
         eventProcessorClient.stop();
