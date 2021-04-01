@@ -63,7 +63,7 @@ public class Program {
         });
 
         EventProcessorClientBuilder eventProcessorClientBuilder = new EventProcessorClientBuilder()
-                .consumerGroup(EventHubClientBuilder.DEFAULT_CONSUMER_GROUP_NAME)
+                .consumerGroup("connieygroup")
                 .connectionString(EH_CONNECTION_STRING, EVENT_HUB)
                 .initialPartitionEventPosition(positions)
                 .processEvent(processEvent)
