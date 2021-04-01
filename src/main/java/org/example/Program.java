@@ -19,10 +19,10 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class Program {
-    private static final String EH_CONNECTION_STRING = System.getProperty("EH_CONNECTION_STRING");
-    private static final String EVENT_HUB = System.getProperty("EH_NAME");
-    private static final String STORAGE_CONNECTION_STRING = System.getProperty("STORAGE_CONNECTION_STRING");
-    private static final String STORAGE_CONTAINER = System.getProperty("STORAGE_CONTAINER");
+    private static final String EH_CONNECTION_STRING = System.getenv("EH_CONNECTION_STRING");
+    private static final String EVENT_HUB = System.getenv("EH_NAME");
+    private static final String STORAGE_CONNECTION_STRING = System.getenv("STORAGE_CONNECTION_STRING");
+    private static final String STORAGE_CONTAINER = System.getenv("STORAGE_CONTAINER");
 
     /**
      * Main method to demonstrate starting and stopping a {@link EventProcessorClient}.
