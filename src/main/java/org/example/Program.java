@@ -36,7 +36,7 @@ public class Program {
 
         Logger logger = LoggerFactory.getLogger(Program.class);
         Consumer<EventContext> processEvent = eventContext -> {
-            System.out.printf("Processing event: Partition Id[%s]; Sequence[%s]%n",
+            logger.info("Processing event. partitionId[{}] sequence[{}]",
                     eventContext.getPartitionContext().getPartitionId(),
                     eventContext.getEventData().getSequenceNumber());
 
