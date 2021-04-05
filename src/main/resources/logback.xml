@@ -15,6 +15,13 @@
             <pattern>%d{HH:mm:ss} [%t] %.-1level %-20logger{20} - %msg%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator>
+                <expression>return logger.equals("org.example.Program");</expression>
+            </evaluator>
+            <OnMismatch>NEUTRAL</OnMismatch>
+            <OnMatch>ACCEPT</OnMatch>
+        </filter>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
                 <expression>return logger.startsWith("com.azure") &amp;&amp; !logger.contains("JacksonAdapter") &amp;&amp; !message.startsWith("onDelivery connectionId");</expression>
             </evaluator>
@@ -24,6 +31,13 @@
     </appender>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator>
+                <expression>return logger.equals("org.example.Program");</expression>
+            </evaluator>
+            <OnMismatch>NEUTRAL</OnMismatch>
+            <OnMatch>ACCEPT</OnMatch>
+        </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
                 <expression>return logger.startsWith("com.azure") &amp;&amp; !logger.contains("JacksonAdapter") &amp;&amp; !logger.equals("com.azure.messaging.eventhubs.PartitionPumpManager") &amp;&amp; !message.startsWith("onDelivery connectionId");</expression>
