@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss} [%t] %.-1level %-20logger{20} - %msg%n"/>
+    </Console>
+  </Appenders>
+
+  <Scripts>
+    <!-- Filter for events from com.azure.messaging.eventhubs package. Exclude events from:
+      * com.azure.messaging.eventhubs.PartitionBasedLoadBalancer
+      * com.azure.messaging.eventhubs.PartitionPumpManager
+        * "Processing event"
+        * "Completed processing event"
+    -->
+    <Script name="EventHubPackageFilter" language="groovy"><![CDATA[
+      def logLevel = logEvent.getLevel();
+      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        return true;
+      }
+
+      if (logEvent.getLoggerName() == null) {
+        return false;
+      }
+
+      def parts = logEvent.getLoggerName().split("\\.");
+      def name = parts[parts.length - 1];
+
+      if ("PartitionBasedLoadBalancer".equals(name)) {
+        return false;
+      }
+
+      if ("PartitionPumpManager".equals(name)) {
+        def message = logEvent.getMessage();
+        return message != null && message.startsWith("On next");
+      }
+
+      return true;
+      ]]>
+    </Script>
+
+    <!-- Filter for events from com.azure.core.amqp.implementation package. Exclude events from:
+      * ReactorSender
+        * "Sent message"
+        * "process delivered message"
+    -->
+    <Script name="AmqpImplementationFilter" language="groovy"><![CDATA[
+      def logLevel = logEvent.getLevel();
+      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        return true;
+      }
+
+      if (logEvent.getLoggerName() == null) {
+        return false;
+      }
+
+      def parts = logEvent.getLoggerName().split("\\.");
+      def name = parts[parts.length - 1];
+
+      if (!"ReactorSender".equals(name)) {
+        return true;
+      }
+
+      def message = logEvent.getMessage();
+      if (message == null) {
+        return false;
+      } else {
+        return !message.contains("On next") && !message.contains("process delivered message");
+      }
+      ]]>
+    </Script>
+
+    <!-- Filter for events from com.azure.core.amqp.implementation.handler package. Exclude events
+      from:
+      * ReceiveLinkHandler
+        * "on Delivery"
+    -->
+    <Script name="AmqpImplementationHandlerFilter" language="groovy"><![CDATA[
+      def logLevel = logEvent.getLevel();
+      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        return true;
+      }
+
+      if (logEvent.getLoggerName() == null) {
+        return false;
+      }
+
+      def parts = logEvent.getLoggerName().split("\\.");
+      def name = parts[parts.length - 1];
+
+      if (!"ReceiveLinkHandler".equals(name)) {
+        return true;
+      }
+
+      def message = logEvent.getMessage();
+      return message != null && !message.startsWith("onDelivery");
+      ]]>
+    </Script>
+  </Scripts>
+
+  <Loggers>
+    <Logger name="com.azure.messaging.eventhubs.implementation" level="TRACE" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+
+    <Logger name="com.azure.messaging.eventhubs" level="TRACE" additivity="false">
+      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
+        <ScriptRef name="EventHubPackageFilter"/>
+      </ScriptFilter>
+
+      <AppenderRef ref="Console"/>
+    </Logger>
+
+    <Logger name="com.azure.core.amqp.implementation.handler" level="TRACE" additivity="false">
+      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
+        <ScriptRef name="AmqpImplementationHandlerFilter"/>
+      </ScriptFilter>
+    </Logger>
+
+    <Logger name="com.azure.core.amqp.implementation" level="TRACE" additivity="false">
+      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
+        <ScriptRef name="AmqpImplementationFilter"/>
+      </ScriptFilter>
+    </Logger>
+
+    <Root level="WARN">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>
