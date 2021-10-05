@@ -40,7 +40,7 @@
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.startsWith("com.azure") &amp;&amp; !logger.contains("JacksonAdapter") &amp;&amp; !logger.equals("com.azure.messaging.eventhubs.PartitionPumpManager") &amp;&amp; !message.startsWith("onDelivery connectionId");</expression>
+                <expression>return logger.startsWith("com.azure") &amp;&amp; !logger.contains("JacksonAdapter");</expression>
             </evaluator>
             <OnMismatch>DENY</OnMismatch>
             <OnMatch>ACCEPT</OnMatch>
@@ -52,8 +52,16 @@
         </encoder>
     </appender>
 
-    <root level="DEBUG">
-        <appender-ref ref="CONSOLE"/>
+    <logger name="com.azure.core.amqp" level="DEBUG">
         <appender-ref ref="NORMAL_ROLLING"/>
+    </logger>
+    <logger name="com.azure.messaging.eventhubs" level="DEBUG">
+        <appender-ref ref="NORMAL_ROLLING"/>
+    </logger>
+
+    <logger name="org.example" level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <root level="OFF">
     </root>
 </configuration>
