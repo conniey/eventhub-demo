@@ -86,7 +86,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.Sender</mainClass>
+                            <mainClass>org.example.Program</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
