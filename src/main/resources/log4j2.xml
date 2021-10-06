@@ -18,11 +18,11 @@
 
   <!-- Additivity is not set here so we inherit the existing Appenders from the Root element. -->
   <Loggers>
-    <!-- Don't log anything from the checkpoint store. -->
+    <!-- Log only warnings from the checkpoint store. -->
     <Logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="WARN">
     </Logger>
 
-    <!-- Log only warnings. The usual output is load balancing output which is noisy. -->
+    <!-- PartitionBasedLoadBalancer: Log warnings. The usual output is load balancing output which is noisy. -->
     <Logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="WARN">
     </Logger>
 
@@ -87,7 +87,7 @@
     </Logger>
 
     <!-- Log messages in ReactorSender that are not 'On next' or 'process delivered message'. -->
-    <Logger name="com.azure.core.amqp.implementation.ReactorSender" level="WARN">
+    <Logger name="com.azure.core.amqp.implementation.ReactorSender" level="DEBUG">
       <ScriptFilter>
         <Script name="ReactorSenderFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
