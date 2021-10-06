@@ -16,22 +16,19 @@
     </RollingFile>
   </Appenders>
 
+  <!-- Additivity is not set here so we inherit the existing Appenders from the Root element. -->
   <Loggers>
     <!-- Don't log anything from the checkpoint store. -->
-    <Logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="WARN" additivity="false">
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
+    <Logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="WARN">
     </Logger>
 
     <!-- Log only warnings. The usual output is load balancing output which is noisy. -->
-    <Logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="WARN" additivity="false">
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
+    <Logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="WARN">
     </Logger>
 
     <!-- OPTIONAL SUPPRESSION. If we know it is not a link credit or propagation issue, we can suppress this. -->
     <!-- Log only the 'On next' messages so we know messages are being propagated downstream. -->
-    <Logger name="com.azure.messaging.eventhubs.PartitionPumpManager" level="DEBUG" additivity="false">
+    <Logger name="com.azure.messaging.eventhubs.PartitionPumpManager" level="DEBUG">
       <ScriptFilter>
         <Script name="PartitionPumpManagerScript" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
@@ -46,19 +43,15 @@
         ]]>
         </Script>
       </ScriptFilter>
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
     </Logger>
 
     <!-- DEFAULT: If the other logger clauses don't apply, log it. This includes our implementation
     classes in com.azure.messaging.eventhubs.implementation. -->
-    <Logger name="com.azure.messaging.eventhubs" level="DEBUG" additivity="false">
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
+    <Logger name="com.azure.messaging.eventhubs" level="DEBUG">
     </Logger>
 
     <!-- Log everything from ReceiveLinkHandler except the 'onDelivery' messages. -->
-    <Logger name="com.azure.core.amqp.implementation.handler.ReceiveLinkHandler" level="DEBUG" additivity="false">
+    <Logger name="com.azure.core.amqp.implementation.handler.ReceiveLinkHandler" level="DEBUG">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
         <Script name="ReceiveLinkHandlerFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
@@ -73,13 +66,10 @@
         ]]>
         </Script>
       </ScriptFilter>
-
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
     </Logger>
 
     <!-- OPTIONAL: Log everything from SendLinkHandler except the 'onLinkFlow' messages. -->
-    <Logger name="com.azure.core.amqp.implementation.handler.SendLinkHandler" level="DEBUG" additivity="false">
+    <Logger name="com.azure.core.amqp.implementation.handler.SendLinkHandler" level="DEBUG">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
         <Script name="SendLinkHandlerFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
@@ -94,13 +84,10 @@
         ]]>
         </Script>
       </ScriptFilter>
-
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
     </Logger>
 
     <!-- Log messages in ReactorSender that are not 'On next' or 'process delivered message'. -->
-    <Logger name="com.azure.core.amqp.implementation.ReactorSender" level="WARN" additivity="false">
+    <Logger name="com.azure.core.amqp.implementation.ReactorSender" level="WARN">
       <ScriptFilter>
         <Script name="ReactorSenderFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
@@ -119,15 +106,10 @@
         ]]>
         </Script>
       </ScriptFilter>
-
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
     </Logger>
 
     <!-- DEFAULT: Log debug messages for our core AMQP implementation classes. -->
-    <Logger name="com.azure.core.amqp.implementation" level="DEBUG" additivity="false">
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingFile"/>
+    <Logger name="com.azure.core.amqp.implementation" level="DEBUG">
     </Logger>
 
     <!-- Root logger. -->
