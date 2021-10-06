@@ -2,135 +2,138 @@
 <Configuration status="INFO">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{HH:mm:ss} [%t] %.-1level %-20logger{20} - %msg%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss} [%t] %level %logger{1.} - %msg%n"/>
     </Console>
+    <RollingFile name="RollingFile" fileName="logs/debug.log"
+                 filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>%d{HH:mm:ss} [%t] %level %logger{1.} - %msg%n"</Pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="25 MB"/>
+      </Policies>
+    </RollingFile>
   </Appenders>
 
-  <Scripts>
-    <!-- Filter for events from com.azure.messaging.eventhubs package. Exclude events from:
-      * com.azure.messaging.eventhubs.PartitionBasedLoadBalancer
-      * com.azure.messaging.eventhubs.PartitionPumpManager
-        * "Processing event"
-        * "Completed processing event"
-    -->
-    <Script name="EventHubPackageFilter" language="groovy"><![CDATA[
-      import org.apache.logging.log4j.Level;
+  <Loggers>
+    <!-- Don't log anything from the checkpoint store. -->
+    <Logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="WARN" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
 
-      def logLevel = logEvent.getLevel();
-      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
-        return true;
-      }
+    <!-- Log only warnings. The usual output is load balancing output which is noisy. -->
+    <Logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="WARN" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
 
-      if (logEvent.getLoggerName() == null) {
-        return false;
-      }
+    <!-- OPTIONAL SUPPRESSION. If we know it is not a link credit or propagation issue, we can suppress this. -->
+    <!-- Log only the 'On next' messages so we know messages are being propagated downstream. -->
+    <Logger name="com.azure.messaging.eventhubs.PartitionPumpManager" level="DEBUG" additivity="false">
+      <ScriptFilter>
+        <Script name="PartitionPumpManagerScript" language="groovy"><![CDATA[
+        import org.apache.logging.log4j.Level;
 
-      def parts = logEvent.getLoggerName().split("\\.");
-      def name = parts[parts.length - 1];
+        def logLevel = logEvent.getLevel();
+        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+          return true;
+        }
 
-      if ("PartitionBasedLoadBalancer".equals(name)) {
-        return false;
-      }
-
-      if ("PartitionPumpManager".equals(name)) {
         def message = logEvent.getMessage();
         return message != null && message.getFormat().startsWith("On next");
-      }
+        ]]>
+        </Script>
+      </ScriptFilter>
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
 
-      return true;
-      ]]>
-    </Script>
+    <!-- DEFAULT: If the other logger clauses don't apply, log it. This includes our implementation
+    classes in com.azure.messaging.eventhubs.implementation. -->
+    <Logger name="com.azure.messaging.eventhubs" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
 
-    <!-- Filter for events from com.azure.core.amqp.implementation package. Exclude events from:
-      * ReactorSender
-        * "Sent message"
-        * "process delivered message"
-    -->
-    <Script name="AmqpImplementationFilter" language="groovy"><![CDATA[
-      import org.apache.logging.log4j.Level;
+    <!-- Log everything from ReceiveLinkHandler except the 'onDelivery' messages. -->
+    <Logger name="com.azure.core.amqp.implementation.handler.ReceiveLinkHandler" level="DEBUG" additivity="false">
+      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
+        <Script name="ReceiveLinkHandlerFilter" language="groovy"><![CDATA[
+        import org.apache.logging.log4j.Level;
 
-      def logLevel = logEvent.getLevel();
-      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
-        return true;
-      }
+        def logLevel = logEvent.getLevel();
+        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+          return true;
+        }
 
-      if (logEvent.getLoggerName() == null) {
-        return false;
-      }
-
-      def parts = logEvent.getLoggerName().split("\\.");
-      def name = parts[parts.length - 1];
-
-      if (!"ReactorSender".equals(name)) {
-        return true;
-      }
-
-      if (logEvent.getMessage() == null) {
-        return false;
-      } else {
-        def format = logEvent.getMessage().getFormat();
-        return !format.contains("On next") && !format.contains("process delivered message");
-      }
-      ]]>
-    </Script>
-
-    <!-- Filter for events from com.azure.core.amqp.implementation.handler package. Exclude events
-      from:
-      * ReceiveLinkHandler
-        * "on Delivery"
-    -->
-    <Script name="AmqpImplementationHandlerFilter" language="groovy"><![CDATA[
-      import org.apache.logging.log4j.Level;
-
-      def logLevel = logEvent.getLevel();
-      if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
-        return true;
-      }
-
-      if (logEvent.getLoggerName() == null) {
-        return false;
-      }
-
-      def parts = logEvent.getLoggerName().split("\\.");
-      def name = parts[parts.length - 1];
-
-      if (!"ReceiveLinkHandler".equals(name)) {
-        return true;
-      } else {
         def message = logEvent.getMessage();
         return message != null && !message.getFormat().startsWith("onDelivery");
-      }
-      ]]>
-    </Script>
-  </Scripts>
-
-  <Loggers>
-    <Logger name="com.azure.messaging.eventhubs.implementation" level="TRACE" additivity="true">
-    </Logger>
-
-    <Logger name="com.azure.messaging.eventhubs" level="TRACE" additivity="true">
-      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef ref="EventHubPackageFilter"/>
+        ]]>
+        </Script>
       </ScriptFilter>
 
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
     </Logger>
 
-    <Logger name="com.azure.core.amqp.implementation.handler" level="TRACE" additivity="true">
+    <!-- OPTIONAL: Log everything from SendLinkHandler except the 'onLinkFlow' messages. -->
+    <Logger name="com.azure.core.amqp.implementation.handler.SendLinkHandler" level="DEBUG" additivity="false">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef ref="AmqpImplementationHandlerFilter"/>
+        <Script name="SendLinkHandlerFilter" language="groovy"><![CDATA[
+        import org.apache.logging.log4j.Level;
+
+        def logLevel = logEvent.getLevel();
+        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+          return true;
+        }
+
+        def message = logEvent.getMessage();
+        return message != null && !message.getFormat().startsWith("onLinkFlow");
+        ]]>
+        </Script>
       </ScriptFilter>
 
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
     </Logger>
 
-    <Logger name="com.azure.core.amqp.implementation" level="TRACE" additivity="true">
-      <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef ref="AmqpImplementationFilter"/>
+    <!-- Log messages in ReactorSender that are not 'On next' or 'process delivered message'. -->
+    <Logger name="com.azure.core.amqp.implementation.ReactorSender" level="WARN" additivity="false">
+      <ScriptFilter>
+        <Script name="ReactorSenderFilter" language="groovy"><![CDATA[
+        import org.apache.logging.log4j.Level;
+
+        def logLevel = logEvent.getLevel();
+        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+          return true;
+        }
+
+        if (logEvent.getMessage() == null) {
+          return false;
+        } else {
+          def format = logEvent.getMessage().getFormat();
+          return !format.contains("On next") && !format.contains("process delivered message");
+        }
+        ]]>
+        </Script>
       </ScriptFilter>
 
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
     </Logger>
 
+    <!-- DEFAULT: Log debug messages for our core AMQP implementation classes. -->
+    <Logger name="com.azure.core.amqp.implementation" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
+
+    <!-- Root logger. -->
     <Root level="WARN">
       <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
     </Root>
   </Loggers>
 </Configuration>
