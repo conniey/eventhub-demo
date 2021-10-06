@@ -33,8 +33,7 @@
         <Script name="PartitionPumpManagerScript" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
 
-        def logLevel = logEvent.getLevel();
-        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        if (logEvent.getLevel().isMoreSpecificThan(Level.WARN)) {
           return true;
         }
 
@@ -56,8 +55,7 @@
         <Script name="ReceiveLinkHandlerFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
 
-        def logLevel = logEvent.getLevel();
-        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        if (logEvent.getLevel().isMoreSpecificThan(Level.WARN)) {
           return true;
         }
 
@@ -74,8 +72,7 @@
         <Script name="SendLinkHandlerFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
 
-        def logLevel = logEvent.getLevel();
-        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        if (logEvent.getLevel().isMoreSpecificThan(Level.WARN)) {
           return true;
         }
 
@@ -92,8 +89,7 @@
         <Script name="ReactorSenderFilter" language="groovy"><![CDATA[
         import org.apache.logging.log4j.Level;
 
-        def logLevel = logEvent.getLevel();
-        if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
+        if (logEvent.getLevel().isMoreSpecificThan(Level.WARN)) {
           return true;
         }
 
