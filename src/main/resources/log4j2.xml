@@ -14,6 +14,8 @@
         * "Completed processing event"
     -->
     <Script name="EventHubPackageFilter" language="groovy"><![CDATA[
+      import org.apache.logging.log4j.Level;
+
       def logLevel = logEvent.getLevel();
       if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
         return true;
@@ -32,7 +34,7 @@
 
       if ("PartitionPumpManager".equals(name)) {
         def message = logEvent.getMessage();
-        return message != null && message.startsWith("On next");
+        return message != null && message.getFormat().startsWith("On next");
       }
 
       return true;
@@ -45,6 +47,8 @@
         * "process delivered message"
     -->
     <Script name="AmqpImplementationFilter" language="groovy"><![CDATA[
+      import org.apache.logging.log4j.Level;
+
       def logLevel = logEvent.getLevel();
       if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
         return true;
@@ -61,11 +65,11 @@
         return true;
       }
 
-      def message = logEvent.getMessage();
-      if (message == null) {
+      if (logEvent.getMessage() == null) {
         return false;
       } else {
-        return !message.contains("On next") && !message.contains("process delivered message");
+        def format = logEvent.getMessage().getFormat();
+        return !format.contains("On next") && !format.contains("process delivered message");
       }
       ]]>
     </Script>
@@ -76,6 +80,8 @@
         * "on Delivery"
     -->
     <Script name="AmqpImplementationHandlerFilter" language="groovy"><![CDATA[
+      import org.apache.logging.log4j.Level;
+
       def logLevel = logEvent.getLevel();
       if (logLevel != Level.TRACE && logLevel != Level.DEBUG) {
         return true;
@@ -90,37 +96,37 @@
 
       if (!"ReceiveLinkHandler".equals(name)) {
         return true;
+      } else {
+        def message = logEvent.getMessage();
+        return message != null && !message.getFormat().startsWith("onDelivery");
       }
-
-      def message = logEvent.getMessage();
-      return message != null && !message.startsWith("onDelivery");
       ]]>
     </Script>
   </Scripts>
 
   <Loggers>
-    <Logger name="com.azure.messaging.eventhubs.implementation" level="TRACE" additivity="false">
-      <AppenderRef ref="Console"/>
+    <Logger name="com.azure.messaging.eventhubs.implementation" level="TRACE" additivity="true">
     </Logger>
 
-    <Logger name="com.azure.messaging.eventhubs" level="TRACE" additivity="false">
+    <Logger name="com.azure.messaging.eventhubs" level="TRACE" additivity="true">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef name="EventHubPackageFilter"/>
+        <ScriptRef ref="EventHubPackageFilter"/>
       </ScriptFilter>
 
-      <AppenderRef ref="Console"/>
     </Logger>
 
-    <Logger name="com.azure.core.amqp.implementation.handler" level="TRACE" additivity="false">
+    <Logger name="com.azure.core.amqp.implementation.handler" level="TRACE" additivity="true">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef name="AmqpImplementationHandlerFilter"/>
+        <ScriptRef ref="AmqpImplementationHandlerFilter"/>
       </ScriptFilter>
+
     </Logger>
 
-    <Logger name="com.azure.core.amqp.implementation" level="TRACE" additivity="false">
+    <Logger name="com.azure.core.amqp.implementation" level="TRACE" additivity="true">
       <ScriptFilter onMatch="ACCEPT" onMismatch="DENY">
-        <ScriptRef name="AmqpImplementationFilter"/>
+        <ScriptRef ref="AmqpImplementationFilter"/>
       </ScriptFilter>
+
     </Logger>
 
     <Root level="WARN">
