@@ -1,9 +1,5 @@
 package org.example;
 
-import com.azure.messaging.eventhubs.EventData;
-import com.azure.messaging.eventhubs.EventDataBatch;
-import com.azure.messaging.eventhubs.EventHubClientBuilder;
-import com.azure.messaging.eventhubs.EventHubProducerClient;
 import com.azure.messaging.eventhubs.EventProcessorClient;
 import com.azure.messaging.eventhubs.EventProcessorClientBuilder;
 import com.azure.messaging.eventhubs.checkpointstore.blob.BlobCheckpointStore;
@@ -14,7 +10,9 @@ import com.azure.storage.blob.BlobContainerAsyncClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +20,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class Program {
-    private static final String EH_CONNECTION_STRING = System.getenv("EH_CONNECTION_STRING");
-    private static final String EVENT_HUB = System.getenv("EH_NAME");
-    private static final String STORAGE_CONNECTION_STRING = System.getenv("STORAGE_CONNECTION_STRING");
-    private static final String STORAGE_CONTAINER = System.getenv("STORAGE_CONTAINER");
-    private static final String CONSUMER_GROUP = System.getenv("CONSUMER_GROUP");
-
     /**
      * Main method to demonstrate starting and stopping a {@link EventProcessorClient}.
      *
@@ -47,9 +39,12 @@ public class Program {
         };
 
         final BlobContainerAsyncClient client = new BlobContainerClientBuilder()
-                .connectionString(STORAGE_CONNECTION_STRING)
-                .containerName(STORAGE_CONTAINER)
+                .connectionString(Environment.getStorageConnectionString())
+                .containerName(Environment.getStorageContainerName())
                 .buildAsyncClient();
+
+        client.exists().flatMap(doesExist -> doesExist ? Mono.empty() : client.create())
+                .block(Duration.ofSeconds(30));
 
         // This error handler logs the error that occurred and keeps the processor running. If the error occurred in
         // a specific partition and had to be closed, the ownership of the partition will be given up and will allow
@@ -67,8 +62,8 @@ public class Program {
         });
 
         EventProcessorClientBuilder eventProcessorClientBuilder = new EventProcessorClientBuilder()
-                .consumerGroup(CONSUMER_GROUP)
-                .connectionString(EH_CONNECTION_STRING, EVENT_HUB)
+                .consumerGroup(Environment.getConsumerGroup())
+                .connectionString(Environment.getEventHubsConnectionString(), Environment.getEventHubName())
                 .initialPartitionEventPosition(positions)
                 .processEvent(processEvent)
                 .processError(processError)
