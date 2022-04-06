@@ -20,12 +20,12 @@ public class Sender {
 
             while (true) {
                 System.out.println("Sending events to " + producer.getEventHubName());
-                publishEvents(producer, 10000);
+                publishEvents(producer, 1500);
 
-                if (Environment.runForever()) {
+                if (true) {
                     try {
-                        System.out.println("Sleeping 60 min.");
-                        TimeUnit.SECONDS.sleep(2);
+                        System.out.println("Sleeping...");
+                        TimeUnit.SECONDS.sleep(5);
                     } catch (InterruptedException e) {
                         System.out.println("Couldn't sleep: " + e);
                         break;

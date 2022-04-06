@@ -34,7 +34,7 @@
       <evaluator>
         <expression>return level &lt; WARN &amp;&amp;
         logger.equals(&quot;com.azure.core.amqp.implementation.handler.ReceiveLinkHandler&quot;) &amp;&amp;
-        message.startsWith(&quot;onDelivery&quot;);</expression>
+        message.contains(&quot;onDelivery&quot;);</expression>
       </evaluator>
       <OnMismatch>NEUTRAL</OnMismatch>
       <OnMatch>DENY</OnMatch>
@@ -44,7 +44,7 @@
     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
       <evaluator>
         <expression>return logger.equals(&quot;com.azure.core.amqp.implementation.handler.SendLinkHandler&quot;)
-        &amp;&amp;message.startsWith(&quot;onLinkFlow&quot;);</expression>
+        &amp;&amp; message.contains(&quot;onLinkFlow&quot;);</expression>
       </evaluator>
       <OnMismatch>NEUTRAL</OnMismatch>
       <OnMatch>DENY</OnMatch>
@@ -74,7 +74,7 @@
       <evaluator>
         <expression>return level &lt; WARN &amp;&amp;
           logger.equals(&quot;com.azure.messaging.eventhubs.PartitionPumpManager&quot;) &amp;&amp;
-          !message.startsWith(&quot;On next&quot;);</expression>
+          !message.contains(&quot;On next&quot;);</expression>
       </evaluator>
       <OnMismatch>NEUTRAL</OnMismatch>
       <OnMatch>DENY</OnMatch>
@@ -85,7 +85,7 @@
       <evaluator>
         <expression>return level &lt; WARN &amp;&amp;
           logger.equals(&quot;com.azure.core.amqp.implementation.handler.ReceiveLinkHandler&quot;) &amp;&amp;
-          message.startsWith(&quot;onDelivery&quot;);</expression>
+          message.contains(&quot;onDelivery&quot;);</expression>
       </evaluator>
       <OnMismatch>NEUTRAL</OnMismatch>
       <OnMatch>DENY</OnMatch>
@@ -95,7 +95,7 @@
     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
       <evaluator>
         <expression>return logger.equals(&quot;com.azure.core.amqp.implementation.handler.SendLinkHandler&quot;)
-          &amp;&amp;message.startsWith(&quot;onLinkFlow&quot;);</expression>
+          &amp;&amp;message.contains(&quot;onLinkFlow&quot;);</expression>
       </evaluator>
       <OnMismatch>NEUTRAL</OnMismatch>
       <OnMatch>DENY</OnMatch>
@@ -112,19 +112,19 @@
     </filter>
   </appender>
 
-  <logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="WARN">
+  <logger name="com.azure.messaging.eventhubs.checkpointstore.blob" level="ERROR">
   </logger>
 
-  <logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="WARN">
+  <logger name="com.azure.messaging.eventhubs.PartitionBasedLoadBalancer" level="ERROR">
   </logger>
 
-  <logger name="com.azure.core.amqp.implementation" level="DEBUG">
+  <logger name="com.azure.core.amqp.implementation" level="ERROR">
   </logger>
 
-  <logger name="com.azure.messaging.eventhubs" level="DEBUG">
+  <logger name="com.azure.messaging.eventhubs" level="ERROR">
   </logger>
 
-  <root level="WARN">
+  <root level="ERROR">
     <appender-ref ref="Console"/>
     <appender-ref ref="RollingFile"/>
   </root>
