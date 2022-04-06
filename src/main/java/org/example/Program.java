@@ -1,7 +1,5 @@
 package org.example;
 
-import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.core.http.policy.HttpLogOptions;
 import com.azure.messaging.eventhubs.EventProcessorClient;
 import com.azure.messaging.eventhubs.EventProcessorClientBuilder;
 import com.azure.messaging.eventhubs.checkpointstore.blob.BlobCheckpointStore;
@@ -28,9 +26,6 @@ public class Program {
     private static final AtomicInteger PARTITION_1 = new AtomicInteger();
     private static final Map<String, AtomicInteger> ATOMIC_INTEGER_MAP = new HashMap<>();
 
-    private static final int BATCH_SIZE = 100;
-    private static final Duration WINDOW = Duration.ofSeconds(2);
-
     /**
      * Main method to demonstrate starting and stopping a {@link EventProcessorClient}.
      *
@@ -51,6 +46,7 @@ public class Program {
 
             eventContext.updateCheckpoint();
         };
+
         final Consumer<EventBatchContext> processEvents = b -> {
             // System.out.println("Batch received. Size: " + b.getEvents());
             // System.out.println("Batch properties:" + b.getLastEnqueuedEventProperties());
@@ -67,7 +63,6 @@ public class Program {
         final BlobContainerAsyncClient client = new BlobContainerClientBuilder()
                 .connectionString(Environment.getStorageConnectionString())
                 .containerName(Environment.getStorageContainerName())
-                .httpLogOptions(new HttpLogOptions().setLogLevel(HttpLogDetailLevel.BODY_AND_HEADERS))
                 .buildAsyncClient();
 
         client.exists().flatMap(doesExist -> doesExist ? Mono.empty() : client.create())
@@ -93,10 +88,18 @@ public class Program {
                 .connectionString(Environment.getEventHubsConnectionString(), Environment.getEventHubName())
                 .initialPartitionEventPosition(positions)
                 .trackLastEnqueuedEventProperties(true)
-                // .processEventBatch(processEvents, BATCH_SIZE, WINDOW)
-                .processEventBatch(processEvents, BATCH_SIZE)
                 .processError(processError)
                 .checkpointStore(new BlobCheckpointStore(client));
+
+        System.out.printf("Batch Size: %d. Window: %s. Use window? %b%n", Environment.getBatchSize(),
+                Environment.getWindowTimeout(), Environment.useWindowTimeout());
+
+        if (Environment.useWindowTimeout()) {
+            eventProcessorClientBuilder.processEventBatch(processEvents, Environment.getBatchSize(),
+                    Environment.getWindowTimeout());
+        } else {
+            eventProcessorClientBuilder.processEventBatch(processEvents, Environment.getBatchSize());
+        }
 
         EventProcessorClient eventProcessorClient = eventProcessorClientBuilder.buildEventProcessorClient();
         System.out.println("Starting event processor");
@@ -120,7 +123,7 @@ public class Program {
         System.out.printf("Start: [%d] End: [%d]. P0 [%d]. P1 [%d].%n", startTime, endTime, p0, p1);
         System.out.printf("P0: [%f] events/s%n", (p0 / durationInS));
         System.out.printf("P1: [%f] events/s%n", (p1 / durationInS));
-        System.out.printf("Overall: [%f] events/s%n", (p0 + p1)/ durationInS);
+        System.out.printf("Overall: [%f] events/s%n", (p0 + p1) / durationInS);
 
         System.out.println("Exiting process");
     }

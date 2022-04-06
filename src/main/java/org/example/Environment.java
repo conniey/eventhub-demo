@@ -2,10 +2,27 @@ package org.example;
 
 import com.azure.messaging.eventhubs.EventHubClientBuilder;
 
+import java.time.Duration;
+
 /**
  * Environment variables used for run.
  */
 class Environment {
+
+    static boolean useWindowTimeout() {
+        final String timeout = System.getenv("WINDOW_TIMEOUT");
+        return timeout != null && Integer.parseInt(timeout) == 1;
+    }
+
+    static int getBatchSize() {
+        return Integer.parseInt(System.getenv("BATCH_SIZE"));
+    }
+
+    static Duration getWindowTimeout() {
+        final int seconds = Integer.parseInt(System.getenv("TIMEOUT_IN_S"));
+        return Duration.ofSeconds(seconds);
+    }
+
     /**
      * Gets Event Hubs namespace connection string.
      *
